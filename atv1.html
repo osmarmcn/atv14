@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta de CEP</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        #resultado {
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Consulta de CEP</h1>
+    <form id="cepForm">
+        <label for="cep">Digite o CEP:</label>
+        <input type="text" id="cep" name="cep" required pattern="\d{8}|\d{5}-\d{3}">
+        <button type="submit">Consultar</button>
+    </form>
+    <div id="resultado"></div>
+
+    <script>
+        document.getElementById('cepForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const cep = document.getElementById('cep').value.replace(/\D/g, '');
+            consultarCEP(cep);
+        });
+
+        function consultarCEP(cep) {
+            fetch(`https://viacep.com.br/ws/${cep}/json/`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.erro) {
+                        exibirResultado('CEP não encontrado.');
+                    } else {
+                        const endereco = `
+                            <h2>Endereço Encontrado:</h2>
+                            <p><strong>CEP:</strong> ${data.cep}</p>
+                            <p><strong>Logradouro:</strong> ${data.logradouro}</p>
+                            <p><strong>Bairro:</strong> ${data.bairro}</p>
+                            <p><strong>Cidade:</strong> ${data.localidade}</p>
+                            <p><strong>Estado:</strong> ${data.uf}</p>
+                        `;
+                        exibirResultado(endereco);
+                    }
+                })
+                .catch(error => {
+                    exibirResultado('Erro ao consultar o CEP. Tente novamente.');
+                    console.error('Erro:', error);
+                });
+        }
+
+        function exibirResultado(conteudo) {
+            const resultadoDiv = document.getElementById('resultado');
+            resultadoDiv.innerHTML = conteudo;
+            resultadoDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

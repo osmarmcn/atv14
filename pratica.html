@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo de Filmes</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+        header {
+            background-color: #032541;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+        }
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        #searchForm {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            gap: 2rem;
+        }
+        #searchInput {
+            padding: 10px;
+            font-size: 16px;
+            width: 300px;
+            border-radius: 5px;
+            border: transparent;
+        }
+        button {
+            padding: 10px 30px;
+            font-size: 16px;
+            background-color: transparent;
+            color: #01b4e4;
+            font-weight: bold;
+            border: 2px solid #01b4e4;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: .4s ease-in-out;
+        }
+        button:hover {
+            background-color: #0192b8;
+            color: #fff;
+        }
+        #movieList {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .movie-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        .movie-card:hover {
+            transform: scale(1.05);
+        }
+        .movie-card img {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+        }
+        .movie-info {
+            padding: 10px;
+        }
+        .movie-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .movie-rating {
+            color: #01b4e4;
+        }
+        #movieDetails {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            margin-top: 20px;
+            display: none;
+            height: 350px;
+        }
+        #movieDetails img {
+            max-width: 300px;
+            height: 300px;
+            float: left;
+            margin-right: 20px;
+            margin-bottom: 20px;
+        }
+        #closeDetails {
+            float: right;
+            background-color: #e50914;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Catálogo de Filmes</h1>
+    </header>
+    <main>
+        <form id="searchForm">
+            <input type="text" id="searchInput" placeholder="Buscar filmes..." required>
+            <button type="submit">Buscar</button>
+        </form>
+        <div id="movieList"></div>
+        <div id="movieDetails"></div>
+    </main>
+
+    <script>
+        const API_KEY = '02a6236bc1b43363643a68ddaf07cc19';
+        const BASE_URL = 'https://api.themoviedb.org/3';
+        const IMG_URL = 'https://image.tmdb.org/t/p/w500';
+
+        const searchForm = document.getElementById('searchForm');
+        const searchInput = document.getElementById('searchInput');
+        const movieList = document.getElementById('movieList');
+        const movieDetails = document.getElementById('movieDetails');
+
+        // Carregar filmes populares ao iniciar a página
+        fetchPopularMovies();
+
+        searchForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const searchTerm = searchInput.value;
+            if (searchTerm) {
+                searchMovies(searchTerm);
+            }
+        });
+
+        function fetchPopularMovies() {
+            fetch(`${BASE_URL}/movie/popular?api_key=${API_KEY}&language=pt-BR`)
+                .then(response => response.json())
+                .then(data => {
+                    displayMovies(data.results);
+                })
+                .catch(error => console.error('Erro:', error));
+        }
+
+        function searchMovies(searchTerm) {
+            fetch(`${BASE_URL}/search/movie?api_key=${API_KEY}&query=${searchTerm}&language=pt-BR`)
+                .then(response => response.json())
+                .then(data => {
+                    displayMovies(data.results);
+                })
+                .catch(error => console.error('Erro:', error));
+        }
+
+        function displayMovies(movies) {
+            movieList.innerHTML = '';
+            movies.forEach(movie => {
+                const movieEl = document.createElement('div');
+                movieEl.classList.add('movie-card');
+                movieEl.innerHTML = `
+                    <img src="${movie.poster_path ? IMG_URL + movie.poster_path : 'https://via.placeholder.com/300x450'}" alt="${movie.title}">
+                    <div class="movie-info">
+                        <div class="movie-title">${movie.title}</div>
+                        <div class="movie-rating">${movie.vote_average.toFixed(1)}</div>
+                    </div>
+                `;
+                movieEl.addEventListener('click', () => showMovieDetails(movie.id));
+                movieList.appendChild(movieEl);
+            });
+        }
+
+        function showMovieDetails(movieId) {
+            fetch(`${BASE_URL}/movie/${movieId}?api_key=${API_KEY}&language=pt-BR&append_to_response=credits`)
+                .then(response => response.json())
+                .then(movie => {
+                    movieDetails.innerHTML = `
+                        <button id="closeDetails">Fechar</button>
+                        <img src="${movie.poster_path ? IMG_URL + movie.poster_path : 'https://via.placeholder.com/300x450'}" alt="${movie.title}">
+                        <h2>${movie.title} (${movie.release_date.split('-')[0]})</h2>
+                        <p><strong>Gêneros:</strong> ${movie.genres.map(genre => genre.name).join(', ')}</p>
+                        <p><strong>Avaliação:</strong> ${movie.vote_average.toFixed(1)}</p>
+                        <p><strong>Sinopse:</strong> ${movie.overview}</p>
+                        <p><strong>Elenco principal:</strong> ${movie.credits.cast.slice(0, 5).map(actor => actor.name).join(', ')}</p>
+                    `;
+                    movieDetails.style.display = 'block';
+                    document.getElementById('closeDetails').addEventListener('click', () => {
+                        movieDetails.style.display = 'none';
+                    });
+                })
+                .catch(error => console.error('Erro:', error));
+        }
+    </script>
+</body>
+</html>

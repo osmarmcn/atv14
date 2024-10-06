@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PokéDex</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        h1 {
+            color: #e3350d;
+            text-align: center;
+        }
+        #searchForm {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        #pokemonInput {
+            padding: 10px;
+            font-size: 16px;
+            width: 200px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #3d7dca;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #003a70;
+        }
+        #pokemonInfo {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            display: none;
+        }
+        #pokemonInfo img {
+            display: block;
+            margin: 0 auto;
+            max-width: 200px;
+        }
+        #error {
+            color: red;
+            text-align: center;
+            display: none;
+        }
+        .type {
+            display: inline-block;
+            padding: 5px 10px;
+            margin: 2px;
+            border-radius: 5px;
+            color: white;
+        }
+        .normal { background-color: #A8A77A; }
+        .fire { background-color: #EE8130; }
+        .water { background-color: #6390F0; }
+        .electric { background-color: #F7D02C; }
+        .grass { background-color: #7AC74C; }
+        .ice { background-color: #96D9D6; }
+        .fighting { background-color: #C22E28; }
+        .poison { background-color: #A33EA1; }
+        .ground { background-color: #E2BF65; }
+        .flying { background-color: #A98FF3; }
+        .psychic { background-color: #F95587; }
+        .bug { background-color: #A6B91A; }
+        .rock { background-color: #B6A136; }
+        .ghost { background-color: #735797; }
+        .dragon { background-color: #6F35FC; }
+        .dark { background-color: #705746; }
+        .steel { background-color: #B7B7CE; }
+        .fairy { background-color: #D685AD; }
+    </style>
+</head>
+<body>
+    <h1>PokéDex</h1>
+    <form id="searchForm">
+        <input type="text" id="pokemonInput" placeholder="Nome ou número do Pokémon" required>
+        <button type="submit">Buscar</button>
+    </form>
+    <div id="error"></div>
+    <div id="pokemonInfo"></div>
+
+    <script>
+        document.getElementById('searchForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const pokemon = document.getElementById('pokemonInput').value.toLowerCase();
+            fetchPokemon(pokemon);
+        });
+
+        function fetchPokemon(pokemon) {
+            const pokemonInfoDiv = document.getElementById('pokemonInfo');
+            const errorDiv = document.getElementById('error');
+            
+            fetch(`https://pokeapi.co/api/v2/pokemon/${pokemon}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Pokémon não encontrado');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const types = data.types.map(type => `<span class="type ${type.type.name}">${type.type.name}</span>`).join(' ');
+                    const abilities = data.abilities.map(ability => ability.ability.name).join(', ');
+                    
+                    pokemonInfoDiv.innerHTML = `
+                        <h2>#${data.id} ${data.name.charAt(0).toUpperCase() + data.name.slice(1)}</h2>
+                        <img src="${data.sprites.front_default}" alt="${data.name}">
+                        <p><strong>Tipos:</strong> ${types}</p>
+                        <p><strong>Altura:</strong> ${data.height / 10} m</p>
+                        <p><strong>Peso:</strong> ${data.weight / 10} kg</p>
+                        <p><strong>Habilidades:</strong> ${abilities}</p>
+                        <h3>Estatísticas Base:</h3>
+                        <ul>
+                            ${data.stats.map(stat => `<li>${stat.stat.name}: ${stat.base_stat}</li>`).join('')}
+                        </ul>
+                    `;
+                    pokemonInfoDiv.style.display = 'block';
+                    errorDiv.style.display = 'none';
+                })
+                .catch(error => {
+                    errorDiv.textContent = `Erro: ${error.message}`;
+                    errorDiv.style.display = 'block';
+                    pokemonInfoDiv.style.display = 'none';
+                });
+        }
+    </script>
+</body>
+</html>
